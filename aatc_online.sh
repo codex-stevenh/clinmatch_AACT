@@ -1,0 +1,1 @@
+PGPASSWORD=TFt7+jftUk_M{6A psql --host aact-db.ctti-clinicaltrials.org --port=5432 --username=stevenhuang --dbname=aact
