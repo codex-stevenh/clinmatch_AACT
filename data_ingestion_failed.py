@@ -45,7 +45,7 @@ def connect_to_db():
         raise
 
 # 34073 total PHASE1-4, INTERVENTIONAL, 'ACTIVE_NOT_RECRUITING', 'NOT_YET_RECRUITING', 'RECRUITING'
-def fetch_study_data(conn, phase, status) -> List[Dict]:
+def fetch_study_data(conn, nct_id) -> List[Dict]:
     """Fetches clinical trial data from the database."""
     query = f"""
     SELECT 
@@ -63,9 +63,7 @@ def fetch_study_data(conn, phase, status) -> List[Dict]:
     LEFT JOIN brief_summaries bs ON s.nct_id = bs.nct_id
     LEFT JOIN eligibilities e ON s.nct_id = e.nct_id
     LEFT JOIN browse_conditions bc ON s.nct_id = bc.nct_id
-    WHERE s.phase IN ('{phase}')
-     AND s.study_type = 'INTERVENTIONAL'
-     AND s.overall_status IN ('ACTIVE_NOT_RECRUITING', 'NOT_YET_RECRUITING', 'RECRUITING')
+    WHERE s.nct_id = '{nct_id}'
     GROUP BY 
         s.nct_id, s.official_title, s.brief_title, s.updated_at, s.overall_status,
         dd.description, bs.description, e.criteria
@@ -151,29 +149,35 @@ def main():
 
     # Step 2: Connect to the database
     conn = connect_to_db()
+    
     try:
         
-        #'ACTIVE_NOT_RECRUITING', 'NOT_YET_RECRUITING', 'RECRUITING'
-        # status = 'ACTIVE_NOT_RECRUITING'
-        status = 'NOT_YET_RECRUITING'
-        
-        # PHASE1: 6487 done - redoing failed - FINISHED
-        # PHASE2/PHASE3: 1175 - done - redoing failed - FINISHED
-        # PHASE1/PHASE2: 3931 - FINISHED
-        # PHASE2: 12213 - 0~6000, 6000~12213 running 
-        # PHASE3: 6271 - FINISHED
-        # PHASE4: 3996 - FINISHED
-        phase = 'PHASE2'
-        phase_dir = 'Data/metamap_result/phase2'
-        failed_log_dir = f'failed_ids_phase2_6k.txt'
+        # phase_dir = 'Data/metamap_result/phase1or2_failed'
+        # failed_log_dir = f'failed_ids_phase1or2_failed.txt'
+        # dir = '/home/stevenhuang/Documents/clinmatch/clinmatch_AACT/failed_ids_phase1or2.txt'
 
-        # Step 3: Fetch data from the Dockerized database
-        records = fetch_study_data(conn, phase, status)
+        # phase_dir = 'Data/metamap_result/phase2_failed'
+        # failed_log_dir = f'failed_ids_phase2_failed_6k.txt'
+        # dir = '/home/stevenhuang/Documents/clinmatch/clinmatch_AACT/failed_ids_phase2_6k.txt'
+
+        # phase_dir = 'Data/metamap_result/phase3_failed'
+        # failed_log_dir = f'failed_ids_phase3_failed.txt'
+        # dir = '/home/stevenhuang/Documents/clinmatch/clinmatch_AACT/failed_ids_phase3.txt'
+
+        phase_dir = 'Data/metamap_result/phase4_failed'
+        failed_log_dir = f'failed_ids_phase4_failed.txt'
+        dir = '/home/stevenhuang/Documents/clinmatch/clinmatch_AACT/failed_ids_phase4.txt'
         
-        start_idx = 0 + 3000 + 3000 + 3000
-        print(start_idx)
-        # for record in tqdm(records[start_idx:start_idx+3000], total=len(records[start_idx:start_idx+3000])):
-        for record in tqdm(records[start_idx:], total=len(records[start_idx:])):
+        with open(dir, 'r') as f:
+            failed_ids = f.readlines()
+        failed_ids = [x.strip() for x in failed_ids]
+        
+        for nct_id in tqdm(failed_ids):
+
+            # Step 3: Fetch data from the Dockerized database
+            records = fetch_study_data(conn, nct_id)
+            record = records[0]
+
             # Step 4: Merge records into text
             merged_text = merge_data_to_text(record)
             merged_text = merged_text.replace('\'', ' ').replace("\\", "").replace('"', "")
@@ -187,13 +191,13 @@ def main():
                 text_length = len(merged_text)
                 start = 0
                 while start < text_length:
-                    end = min(start + 4000, text_length)
+                    end = min(start + 5000, text_length)
                     # create a single payload with all the splitted texts
                     payload = {
                         'text': merged_text[start:end]
                     }
                     payloads.append(payload)
-                    start += 3900
+                    start += 4900
                 
                 lambda_results_all_payloads = []
                 for i, payload in enumerate(payloads):

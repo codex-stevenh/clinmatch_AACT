@@ -53,8 +53,8 @@ def create_dynamodb_table():
                 }
             ],
             ProvisionedThroughput={
-                'ReadCapacityUnits': 5,
-                'WriteCapacityUnits': 5
+                'ReadCapacityUnits': 5000,
+                'WriteCapacityUnits': 5000
             }
         )
 
