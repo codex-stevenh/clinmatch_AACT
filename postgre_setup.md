@@ -1,6 +1,9 @@
 Below is a complete solution that addresses your query: setting up a PostgreSQL database using Docker, restoring a database from a `postgres.dmp` file located on the host machine, and writing a Python script to extract data from the Dockerized database and call an AWS Lambda function.
 
 ---
+<option value="https://ctti-aact.nyc3.digitaloceanspaces.com/sro33ni77gmgd982y91c2qu4mxw0">20250423_clinical_trials_ctgov.zip</option>
+
+wget https://ctti-aact.nyc3.digitaloceanspaces.com/1txlxyq18vcn6y0sslyd5egrl52x
 
 ## Step 1: Set Up PostgreSQL with Docker
 
@@ -45,7 +48,7 @@ Create a new database named `my_clinical_trials_db` inside the container:
 ```bash
 ->  createdb aact  
 
-docker exec -it postgres-container psql -U postgres -c "CREATE DATABASE clinmatch_aact;"
+docker exec -it postgres-clinmatch-aact-20250423 psql -U postgres -c "CREATE DATABASE clinmatch_aact;"
 
 psql -U postgres -c "CREATE ROLE read_only;"
 ```
@@ -64,7 +67,8 @@ docker exec -it postgres-container pg_restore -U postgres -d clinmatch_aact -e -
 pg_restore -U postgres -d clinmatch_aact -e -v -O --no-owner /dump/postgres.dmp
 pg_restore -U postgres -e -v -O -x -d clinmatch_aact --clean --no-owner /dump/postgres.dmp
 
-alter role postgres in database clinmatch_aact set search_path = ctgov, public;
+psql -U postgres -d clinmatch_aact
+ALTER USER postgres SET search_path = ctgov, public;
 ```
 
 - **Explanation**:
