@@ -16,9 +16,7 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# AWS Lambda function details (replace with your own)
-LAMBDA_FUNCTION_NAME = 'clinmatch-dev-metamapParser'  # Your Lambda function name
-DYNAMODB_TABLE_NAME = 'clinmatch-AACT-metamap'
+DYNAMODB_TABLE_NAME = 'clinmatch-dev-AACT-metamap'
 AWS_REGION = 'ap-east-1'
 
 
@@ -48,26 +46,33 @@ def write_to_dynamodb(nct_id: str, updated_at: str, lambda_result: Dict):
 
 if __name__ == '__main__':
 
+    # get folder names in Data/metamap_result_processed
+    folder_dir = 'Data/metamap_result_processed'
+    folder_names = [folder for folder in os.listdir(folder_dir) if os.path.isdir(os.path.join(folder_dir, folder))]
+    folder_names
+
     # phase = 'phase2_failed' # phase2_failed phase3_failed phase4_failed
-    phase = 'phase2' #'phase2' # phase3 phase4
-    input_root_dir = f'Data/metamap_result_processed/{phase}'
+    for phase in folder_names:
+    # phase = 'phase2' #'phase2' # phase3 phase4
+        print(phase)
+        input_root_dir = f'Data/metamap_result_processed/{phase}'
 
-    dynamodb = boto3.Session(aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'), aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')).resource('dynamodb', region_name=AWS_REGION)
-    table = dynamodb.Table(DYNAMODB_TABLE_NAME)
+        dynamodb = boto3.Session(aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'), aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')).resource('dynamodb', region_name=AWS_REGION)
+        table = dynamodb.Table(DYNAMODB_TABLE_NAME)
 
-    # for each json file in input_root_dir, call remove_duplicate_cuis
-    json_files = os.listdir(input_root_dir)
-    for filename in tqdm(json_files):
-        if filename.endswith('.json'):
-            input_file_path = os.path.join(input_root_dir, filename)
-            with open(input_file_path, 'r') as f: 
-                item = json.load(f)
-            try:
-                # Write to DynamoDB
-                table.put_item(Item=item)
-                nct_id = filename.split('.')[0]
-                logger.info(f"Successfully wrote data for nct_id: {nct_id} to DynamoDB")
-                
-            except ClientError as e:
-                logger.error(f"Error writing to DynamoDB: {e}")
-                raise
+        # for each json file in input_root_dir, call remove_duplicate_cuis
+        json_files = os.listdir(input_root_dir)
+        for filename in tqdm(json_files):
+            if filename.endswith('.json'):
+                input_file_path = os.path.join(input_root_dir, filename)
+                with open(input_file_path, 'r') as f: 
+                    item = json.load(f)
+                try:
+                    # Write to DynamoDB
+                    table.put_item(Item=item)
+                    nct_id = filename.split('.')[0]
+                    logger.info(f"Successfully wrote data for nct_id: {nct_id} to DynamoDB")
+                    
+                except ClientError as e:
+                    logger.error(f"Error writing to DynamoDB: {e}")
+                    raise

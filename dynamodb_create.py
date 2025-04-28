@@ -12,10 +12,11 @@ logger = logging.getLogger(__name__)
 
 # AWS region (replace with your region)
 AWS_REGION = 'ap-east-1'
+table_name = 'clinmatch-dev-AACT-metamap'
 
-def create_dynamodb_table():
+def create_dynamodb_table(table_name):
     """
-    Creates a DynamoDB table named 'clinmatch-AACT-metamap' with nct_id as partition key
+    Creates a DynamoDB table named 'table_name' with nct_id as partition key
     and updated_at as sort key.
     """
     try:
@@ -23,15 +24,15 @@ def create_dynamodb_table():
         
         # # Check if the table already exists
         try:
-            dynamodb.describe_table(TableName='clinmatch-AACT-metamap')
-            logger.info("Table 'clinmatch-AACT-metamap' already exists.")
+            dynamodb.describe_table(TableName=table_name)
+            logger.info(f"Table '{table_name}' already exists.")
             return
         except dynamodb.exceptions.ResourceNotFoundException:
-            logger.info("Table 'clinmatch-AACT-metamap' does not exist. Creating now...")
+            logger.info(f"Table '{table_name}' does not exist. Creating now...")
 
         # Create the table
         response = dynamodb.create_table(
-            TableName='clinmatch-AACT-metamap',
+            TableName=table_name,
             KeySchema=[
                 {
                     'AttributeName': 'nct_id',
@@ -60,11 +61,11 @@ def create_dynamodb_table():
 
         # Wait for the table to become active
         waiter = dynamodb.get_waiter('table_exists')
-        waiter.wait(TableName='clinmatch-AACT-metamap')
-        logger.info("Table 'clinmatch-AACT-metamap' created successfully.")
+        waiter.wait(TableName='clinmatch-dev-AACT-metamap')
+        logger.info(f"Table '{table_name}' created successfully.")
         
     except ClientError as e:
         logger.error(f"Error creating DynamoDB table: {e}")
         raise
 
-create_dynamodb_table()
+create_dynamodb_table(table_name)
