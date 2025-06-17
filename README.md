@@ -1,1 +1,5 @@
-# clinmatch_AACT
+# clinmatch_AACT 
+
+This repo contains source code and pipelines to process and ingest AACT dataset into AWS DynamoDB for storage and analysis. The latest AACT image is pulled and ingested locally into a docker-based PostgreSQL database. From this dataset, a subset of clinical trials is selected based on specific criteria: trials with a study_type of "interventional" and an overall_status of "not_yet_recruiting," "active_not_recruiting," or "recruiting." The selected fields for these trials include the official trial title, brief trial title, brief description, detailed description, and eligibility criteria. 
+
+The eligibility criteria are processed using Metamap, which is deployed as an AWS Lambda function to extract relevant medical concepts and metadata. The processed Metamap results, along with the selected trial fields, are then ingested into a DynamoDB table for efficient storage and querying. This workflow ensures that semi-structured data is readily available for downstream analysis and applications.  
